@@ -1,38 +1,301 @@
-.App {
-  text-align: center;
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f7fc;
+  color: #1e293b;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Navbar */
+.navbar {
+  background: #172b4d !important;
+  padding: 18px 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.navbar-brand {
+  font-size: 23px;
+  font-weight: bold;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.nav-link-custom {
+  color: white;
+  text-decoration: none;
+  margin-left: 25px;
+  font-size: 16px;
+}
+
+.nav-link-custom:hover {
+  color: #79b5ff;
+}
+
+/* Home page */
+.home-page {
+  min-height: 85vh;
+}
+
+.hero {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  justify-content: space-around;
+  padding: 80px 9%;
+  background: linear-gradient(120deg, #eaf2ff, #d6e7ff);
+}
+
+.hero-content {
+  max-width: 600px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.hero h1 span {
+  color: #1266dc;
+}
+
+.hero p {
+  font-size: 20px;
+  color: #52627a;
+  margin: 20px 0;
+}
+
+.hero-btn {
+  background: #1266dc;
+  color: white;
+  padding: 13px 30px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.hero-btn:hover {
+  background: #084cae;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.hero-image {
+  position: relative;
+  font-size: 150px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.clock {
+  position: absolute;
+  font-size: 65px;
+  bottom: 0;
+  right: -15px;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  padding-top: 45px;
+  padding-bottom: 45px;
+}
+
+.feature-card {
+  background: white;
+  text-align: center;
+  padding: 30px 22px;
+  border-radius: 16px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.07);
+  transition: 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-7px);
+}
+
+.feature-icon {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto auto 15px;
+  font-size: 35px;
+}
+
+.blue {
+  background: #dceaff;
+  color: #1266dc;
+}
+
+.green {
+  background: #d7f5e8;
+}
+
+.purple {
+  background: #e9e1ff;
+}
+
+.feature-card h3 {
+  font-weight: bold;
+}
+
+.feature-card p {
+  color: #64748b;
+  min-height: 48px;
+}
+
+.feature-link {
+  display: block;
+  padding: 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  border: 1px solid;
+}
+
+.blue-link {
+  color: #1266dc;
+}
+
+.green-link {
+  color: #168653;
+}
+
+.purple-link {
+  color: #7046d8;
+}
+
+/* Registration page */
+.form-page {
+  min-height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 15px;
+}
+
+.form-card {
+  background: white;
+  width: 100%;
+  max-width: 480px;
+  padding: 40px;
+  border-radius: 18px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.08);
+}
+
+.form-icon {
+  font-size: 45px;
+  text-align: center;
+}
+
+.form-card h2 {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.form-subtitle {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 30px;
+}
+
+.form-control {
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.register-btn {
+  background: #168653;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.register-btn:hover {
+  background: #11683f;
+  color: white;
+}
+
+/* About page */
+.about-page {
+  padding-top: 65px;
+  padding-bottom: 65px;
+}
+
+.about-card {
+  background: white;
+  padding: 45px;
+  text-align: center;
+  border-radius: 18px;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+}
+
+.about-icon {
+  font-size: 50px;
+}
+
+.about-card h1 {
+  font-weight: bold;
+  margin: 15px 0;
+}
+
+.about-description {
+  max-width: 700px;
+  margin: 0 auto 40px;
+  color: #64748b;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.about-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.about-features div {
+  background: #f4f7fc;
+  padding: 25px 15px;
+  border-radius: 12px;
+}
+
+.about-features span {
+  color: #168653;
+  font-size: 30px;
+}
+
+.about-features h4 {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 55px 20px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .hero h1 {
+    font-size: 34px;
+  }
+
+  .hero-image {
+    font-size: 100px;
+    margin-top: 30px;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .about-features {
+    grid-template-columns: 1fr;
+  }
+
+  .form-card {
+    padding: 25px;
+  }
+
+  .about-card {
+    padding: 25px;
   }
 }

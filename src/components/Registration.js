@@ -89,6 +89,8 @@ function Registration() {
             <label className="form-label">Full Name</label>
             <input
               type="text"
+              name="name"
+              id="name"
               className="form-control"
               placeholder="Enter your name"
               value={name}
@@ -101,6 +103,8 @@ function Registration() {
             <label className="form-label">Email Address</label>
             <input
               type="text"
+              name="email"
+              id="email"
               className="form-control"
               placeholder="Enter your email"
               value={email}
@@ -113,6 +117,8 @@ function Registration() {
             <label className="form-label">Phone Number</label>
             <input
               type="tel"
+              name="phone"
+              id="phone"
               className="form-control"
               placeholder="Enter 10 digit phone number"
               value={phone}

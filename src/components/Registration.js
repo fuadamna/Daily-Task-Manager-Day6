@@ -1,12 +1,14 @@
-
 import React, { useState } from 'react';
-import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import { Link } from 'react-router-dom';
 
 function Registration() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,43 +19,68 @@ function Registration() {
     setMessage('');
     setError('');
 
+    // Check empty fields
+    if (!name.trim() || !email.trim() || !phone.trim() || !password) {
+      setError('All fields are required!');
+      return;
+    }
+
     // Name validation
     if (name.trim().length < 3) {
-      setError("Name must be at least 3 characters");
+      setError('Name must be at least 3 characters');
       return;
     }
 
     // Email validation
-    if (!email.includes("@") || !email.includes(".")) {
-      setError("Invalid email");
+    if (!email.includes('@') || !email.includes('.')) {
+      setError('Invalid email');
       return;
     }
 
     // Phone validation
-    if (phone.length !== 10 || isNaN(phone)) {
-      setError("Phone must be 10 digits");
+    if (!/^\d{10}$/.test(phone)) {
+      setError('Phone must be 10 digits');
+      return;
+    }
+
+    // Password validation
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
     try {
       setLoading(true);
 
-      await addDoc(collection(db, 'users'), {
+      // Create Firebase Authentication account
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+
+      const user = userCredential.user;
+
+      // Save user details in Firestore using Firebase UID
+      await setDoc(doc(db, 'users', user.uid), {
         name: name.trim(),
         email: email.trim(),
         phone: phone,
-        timestamp: serverTimestamp()
+        role: 'user',
+        createdAt: serverTimestamp()
       });
 
       setMessage('Registration successful!');
 
+      // Clear form fields
       setName('');
       setEmail('');
       setPhone('');
+      setPassword('');
 
     } catch (err) {
-      console.error('Error adding document:', err);
-      setError('Error submitting form. Please try again.');
+      console.error('Registration error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -62,6 +89,7 @@ function Registration() {
   return (
     <div className="form-page">
       <div className="form-card">
+
         <div className="form-icon">👤</div>
 
         <h2>Create Your Account</h2>
@@ -85,17 +113,16 @@ function Registration() {
         )}
 
         <form onSubmit={handleSubmit}>
+
           <div className="mb-3">
             <label className="form-label">Full Name</label>
             <input
               type="text"
               name="name"
-              id="name"
               className="form-control"
               placeholder="Enter your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
             />
           </div>
 
@@ -104,27 +131,35 @@ function Registration() {
             <input
               type="text"
               name="email"
-              id="email"
               className="form-control"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-3">
             <label className="form-label">Phone Number</label>
             <input
               type="tel"
               name="phone"
-              id="phone"
               className="form-control"
               placeholder="Enter 10 digit phone number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               maxLength="10"
-              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              name="password"
+              className="form-control"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
@@ -142,7 +177,14 @@ function Registration() {
               'Register Now →'
             )}
           </button>
+
         </form>
+
+        <p className="mt-4 text-center">
+          Already have an account?{' '}
+          <Link to="/login">Login here</Link>
+        </p>
+
       </div>
     </div>
   );

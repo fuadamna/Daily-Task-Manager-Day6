@@ -299,3 +299,53 @@ body {
     padding: 25px;
   }
 }
+
+/* Day 9 UI improvements */
+.user-table-header th {
+  background-color: #dceaff;
+  color: #172b4d;
+  padding: 15px;
+  vertical-align: middle;
+}
+
+.table-responsive {
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.table .btn,
+.card,
+.register-btn,
+.hero-btn {
+  transition: 0.3s ease;
+}
+
+.table .btn:hover,
+.register-btn:hover,
+.hero-btn:hover {
+  transform: translateY(-2px);
+}
+
+.card {
+  border-radius: 12px;
+}
+
+@media (max-width: 576px) {
+  .navbar {
+    padding: 12px 0;
+  }
+
+  .navbar-brand {
+    font-size: 18px;
+  }
+
+  .nav-link-custom {
+    margin-left: 8px;
+    font-size: 14px;
+  }
+
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}

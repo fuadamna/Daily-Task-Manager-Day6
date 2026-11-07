@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
+
 import {
   collection,
   getDocs,
@@ -13,129 +14,86 @@ function UserList() {
 
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
 
-  // States for Update
   const [editingUser, setEditingUser] = useState(null);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
-  // States for loading and messages
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('success');
 
-  // State for Delete Modal
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
   const [deleteUser, setDeleteUser] = useState(null);
 
-  // Fetch data from Firebase
+  // Fetch users from Firebase
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+
+      const querySnapshot = await getDocs(collection(db, 'users'));
+
+      const userList = querySnapshot.docs
+        .map((document) => ({
+          id: document.id,
+          ...document.data()
+        }))
+        .filter((user) => user.role === 'user');
+
+      setUsers(userList);
+
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setMessage('Unable to load users.');
+      setMessageType('danger');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-
-        const userData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-
-        setUsers(userData);
-
-      } catch (error) {
-        console.log('Error fetching users:', error);
-        setMessage('Error fetching users');
-        setMessageType('danger');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
-
   }, []);
 
-  // Search functionality
-  const filteredUsers = users.filter(user =>
-    (user.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  // Search users
+  const filteredUsers = users.filter((user) =>
+    (user.name || '').toLowerCase().includes(searchTerm.trim().toLowerCase())
   );
 
-  // Sorting function
-  const sortBy = (key) => {
+  // Sort users
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const valueA = (a[sortField] || '').toString().toLowerCase();
+    const valueB = (b[sortField] || '').toString().toLowerCase();
 
-    const sorted = [...users].sort((a, b) => {
-      const valueA = String(a[key] || '').toLowerCase();
-      const valueB = String(b[key] || '').toLowerCase();
-
-      if (sortOrder === 'asc') {
-        return valueA.localeCompare(valueB);
-      } else {
-        return valueB.localeCompare(valueA);
-      }
-    });
-
-    setUsers(sorted);
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  };
-
-  // Delete functionality - Open Bootstrap Modal
-  const handleDelete = (user) => {
-
-    setMessage('');
-    setDeleteUser(user);
-
-  };
-
-  // Confirm Delete functionality
-  const confirmDelete = async () => {
-
-    if (!deleteUser || deleting) {
-      return;
+    if (valueA < valueB) {
+      return sortOrder === 'asc' ? -1 : 1;
     }
 
-    setDeleting(true);
+    if (valueA > valueB) {
+      return sortOrder === 'asc' ? 1 : -1;
+    }
 
-    try {
+    return 0;
+  });
 
-      await deleteDoc(doc(db, 'users', deleteUser.id));
-
-      setUsers(prevUsers =>
-        prevUsers.filter(user => user.id !== deleteUser.id)
-      );
-
-      setDeleteUser(null);
-
-      setMessage('User deleted successfully!');
-      setMessageType('success');
-
-    } catch (err) {
-
-      console.error(err);
-
-      setDeleteUser(null);
-      setMessage('Error deleting user');
-      setMessageType('danger');
-
-    } finally {
-      setDeleting(false);
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
     }
   };
 
-  // Close Delete Modal
-  const handleCancelDelete = () => {
-
-    if (!deleting) {
-      setDeleteUser(null);
-    }
-
-  };
-
-  // Edit functionality
+  // Edit user
   const handleEdit = (user) => {
-
     setEditingUser(user);
 
     setName(user.name || '');
@@ -143,116 +101,147 @@ function UserList() {
     setPhone(user.phone || '');
 
     setMessage('');
-
-  };
-
-  // Update functionality
-  const handleUpdate = async (e) => {
-
-    e.preventDefault();
-
-    // Check empty fields
-    if (!name.trim() || !email.trim() || !phone.trim()) {
-      setMessage('All fields are required!');
-      setMessageType('danger');
-      return;
-    }
-
-    // Check valid email
-    if (!email.includes("@") || !email.includes(".")) {
-      setMessage('Please enter a valid email address!');
-      setMessageType('danger');
-      return;
-    }
-
-    // Check phone number
-    if (phone.length !== 10 || isNaN(phone)) {
-      setMessage('Phone number must be 10 digits!');
-      setMessageType('danger');
-      return;
-    }
-
-    setUpdating(true);
-
-    try {
-
-      const userRef = doc(db, 'users', editingUser.id);
-
-      await updateDoc(userRef, {
-        name,
-        email,
-        phone
-      });
-
-      setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === editingUser.id
-            ? { ...u, name, email, phone }
-            : u
-        )
-      );
-
-      setEditingUser(null);
-
-      setName('');
-      setEmail('');
-      setPhone('');
-
-      setMessage('User updated successfully!');
-      setMessageType('success');
-
-    } catch (err) {
-
-      console.error(err);
-
-      setMessage('Error updating user');
-      setMessageType('danger');
-
-    } finally {
-      setUpdating(false);
-    }
-
   };
 
   // Cancel editing
   const handleCancel = () => {
-
     setEditingUser(null);
+
     setName('');
     setEmail('');
     setPhone('');
-    setMessage('');
 
+    setMessage('');
+  };
+
+  // Update user
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+
+    if (!name.trim() || !email.trim() || !phone.trim()) {
+      setMessage('Please fill in all fields.');
+      setMessageType('danger');
+      return;
+    }
+
+    if (name.trim().length < 3) {
+      setMessage('Name must contain at least 3 characters.');
+      setMessageType('danger');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setMessage('Please enter a valid email address.');
+      setMessageType('danger');
+      return;
+    }
+
+    if (!/^[0-9]{10}$/.test(phone.trim())) {
+      setMessage('Phone number must contain 10 digits.');
+      setMessageType('danger');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      await updateDoc(doc(db, 'users', editingUser.id), {
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim()
+      });
+
+      setMessage('User updated successfully!');
+      setMessageType('success');
+
+      setEditingUser(null);
+      setName('');
+      setEmail('');
+      setPhone('');
+
+      await fetchUsers();
+
+    } catch (error) {
+      console.error('Error updating user:', error);
+      setMessage('Unable to update user.');
+      setMessageType('danger');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Open delete confirmation
+  const handleDeleteClick = (user) => {
+    setDeleteUser(user);
+  };
+
+  // Delete user
+  const handleDelete = async () => {
+    if (!deleteUser) return;
+
+    try {
+      setDeleting(true);
+
+      await deleteDoc(doc(db, 'users', deleteUser.id));
+
+      setUsers((previousUsers) =>
+        previousUsers.filter((user) => user.id !== deleteUser.id)
+      );
+
+      setMessage('User deleted successfully!');
+      setMessageType('success');
+
+      setDeleteUser(null);
+
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setMessage('Unable to delete user.');
+      setMessageType('danger');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Reset search and sorting
+  const handleReset = () => {
+    setSearchTerm('');
+    setSortField('name');
+    setSortOrder('asc');
   };
 
   return (
+    <div className="container my-5">
 
-    <div className="container mt-5 mb-5">
+      <h2 className="text-center mb-4">
+        Registered Users
+      </h2>
 
-      <h2 className="text-center mb-4">Registered Users</h2>
-
-      {/* Success and Error Messages */}
+      {/* Message */}
       {message && (
-
-        <div className={`alert alert-${messageType}`} role="alert">
+        <div className={`alert alert-${messageType} alert-dismissible fade show`}>
           {message}
-        </div>
 
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setMessage('')}
+          ></button>
+        </div>
       )}
 
-      {/* Update Form */}
+      {/* Edit Form */}
       {editingUser && (
+        <div className="card mb-4">
 
-        <div className="card shadow-sm mb-4">
+          <div className="card-header bg-dark text-white">
+            Update User
+          </div>
 
           <div className="card-body">
-
-            <h4 className="mb-3">Update User Details</h4>
 
             <form onSubmit={handleUpdate}>
 
               <div className="mb-3">
-
                 <label className="form-label">Name</label>
 
                 <input
@@ -261,24 +250,20 @@ function UserList() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-
               </div>
 
               <div className="mb-3">
-
                 <label className="form-label">Email</label>
 
                 <input
-                  type="text"
+                  type="email"
                   className="form-control"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-
               </div>
 
               <div className="mb-3">
-
                 <label className="form-label">Phone</label>
 
                 <input
@@ -287,7 +272,6 @@ function UserList() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
-
               </div>
 
               <button
@@ -295,16 +279,7 @@ function UserList() {
                 className="btn btn-primary me-2"
                 disabled={updating}
               >
-
-                {updating ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2"></span>
-                    Updating...
-                  </>
-                ) : (
-                  'Update'
-                )}
-
+                {updating ? 'Updating...' : 'Update'}
               </button>
 
               <button
@@ -319,107 +294,117 @@ function UserList() {
             </form>
 
           </div>
-
         </div>
-
       )}
 
-      {/* Search box */}
+      {/* Search and Reset */}
       {!editingUser && (
-
-        <div className="d-flex gap-2 mb-4">
-
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search users by name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-
-          <button
-            className="btn btn-secondary"
-            onClick={() => setSearchTerm('')}
-          >
-            Reset
-          </button>
-
-        </div>
-
-      )}
-
-      {/* Loading */}
-      {loading ? (
-
-        <div className="text-center">
-
-          <div className="spinner-border text-primary"></div>
-
-          <p>Loading users...</p>
-
-        </div>
-
-      ) : (
-
         <>
 
-          {/* Desktop and Tablet Table */}
-          {!editingUser && (
+          <div
+            className="d-flex gap-2 mb-3 align-items-center"
+            style={{ width: '100%' }}
+          >
 
-            <div className="table-responsive d-none d-md-block">
+            <input
+              type="text"
+              className="form-control"
+              style={{
+      flex: '1',
+      minWidth: '0',
+      height: '40px'
+    }}
+              placeholder="Search by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
 
-              <table className="table table-bordered table-striped">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ height: '40px' }}
+              onClick={handleReset}
+            >
+              Reset
+            </button>
 
-                <thead className="table-dark">
+          </div>
 
-                  <tr>
+          {loading ? (
 
-                    <th
-                      onClick={() => sortBy('name')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      Name {sortOrder === 'asc' ? '▲' : '▼'}
-                    </th>
+            <div className="text-center my-4">
+              <div className="spinner-border text-primary"></div>
+              <p className="mt-2">Loading users...</p>
+            </div>
 
-                    <th
-                      onClick={() => sortBy('email')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      Email {sortOrder === 'asc' ? '▲' : '▼'}
-                    </th>
+          ) : sortedUsers.length === 0 ? (
 
-                    <th>Phone</th>
+            <p className="text-center text-muted my-4">
+              No users found.
+            </p>
 
-                    <th>Actions</th>
+          ) : (
 
-                  </tr>
+            <>
 
-                </thead>
+              {/* Desktop Table */}
+              <div className="table-responsive d-none d-md-block">
 
-                <tbody>
+                <table className="table table-bordered table-striped text-center align-middle">
 
-                  {filteredUsers.length > 0 ? (
+                  <thead className="table-dark">
+                    <tr>
 
-                    filteredUsers.map(user => (
+                      <th>No.</th>
 
+                      <th>
+                        <button
+                          type="button"
+                          className="btn btn-link text-white text-decoration-none p-0 fw-bold"
+                          onClick={() => handleSort('name')}
+                        >
+                          Name {sortField === 'name' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                        </button>
+                      </th>
+
+                      <th>
+                        <button
+                          type="button"
+                          className="btn btn-link text-white text-decoration-none p-0 fw-bold"
+                          onClick={() => handleSort('email')}
+                        >
+                          Email {sortField === 'email' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                        </button>
+                      </th>
+
+                      <th>Phone</th>
+                      <th>Actions</th>
+
+                    </tr>
+                  </thead>
+
+                  <tbody>
+
+                    {sortedUsers.map((user, index) => (
                       <tr key={user.id}>
 
-                        <td>{user.name || '-'}</td>
-                        <td>{user.email || '-'}</td>
-                        <td>{user.phone || '-'}</td>
+                        <td>{index + 1}</td>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                        <td>{user.phone}</td>
 
                         <td>
 
                           <button
-                            className="btn btn-primary btn-sm me-2 mb-1"
+                            className="btn btn-primary btn-sm me-2"
                             onClick={() => handleEdit(user)}
                           >
                             Edit
                           </button>
 
                           <button
-                            className="btn btn-danger btn-sm mb-1"
-                            onClick={() => handleDelete(user)}
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDeleteClick(user)}
                           >
                             Delete
                           </button>
@@ -427,163 +412,118 @@ function UserList() {
                         </td>
 
                       </tr>
+                    ))}
 
-                    ))
+                  </tbody>
 
-                  ) : (
+                </table>
 
-                    <tr>
+              </div>
 
-                      <td colSpan="4" className="text-center">
-                        No users found
-                      </td>
+              {/* Mobile User Cards */}
+              <div className="d-md-none">
 
-                    </tr>
-
-                  )}
-
-                </tbody>
-
-              </table>
-
-            </div>
-
-          )}
-
-          {/* Mobile Cards */}
-          {!editingUser && (
-
-            <div className="d-md-none">
-
-              {filteredUsers.length > 0 ? (
-
-                filteredUsers.map(user => (
-
+                {sortedUsers.map((user) => (
                   <div className="card mb-3 shadow-sm" key={user.id}>
 
                     <div className="card-body">
 
                       <h5 className="card-title">
-                        {user.name || '-'}
+                        {user.name}
                       </h5>
 
                       <p className="card-text mb-2">
-                        <strong>Email:</strong> {user.email || '-'}
+                        <strong>Email:</strong> {user.email}
                       </p>
 
                       <p className="card-text mb-3">
-                        <strong>Phone:</strong> {user.phone || '-'}
+                        <strong>Phone:</strong> {user.phone}
                       </p>
 
-                      <button
-                        className="btn btn-primary btn-sm me-2"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Edit
-                      </button>
+                      <div className="d-flex gap-2">
 
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDelete(user)}
-                      >
-                        Delete
-                      </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => handleEdit(user)}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDeleteClick(user)}
+                        >
+                          Delete
+                        </button>
+
+                      </div>
 
                     </div>
 
                   </div>
+                ))}
 
-                ))
+              </div>
 
-              ) : (
-
-                <p className="text-center">
-                  No users found
-                </p>
-
-              )}
-
-            </div>
+            </>
 
           )}
 
         </>
-
       )}
 
-      {/* Bootstrap Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {deleteUser && (
 
-        <>
+        <div
+          className="modal show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+        >
 
-          <div
-            className="modal fade show"
-            style={{ display: 'block' }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="deleteModalTitle"
-          >
+          <div className="modal-dialog modal-dialog-centered">
 
-            <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
 
-              <div className="modal-content">
+              <div className="modal-header">
 
-                <div className="modal-header">
+                <h5 className="modal-title">
+                  Confirm Delete
+                </h5>
 
-                  <h5 className="modal-title" id="deleteModalTitle">
-                    Confirm Delete
-                  </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setDeleteUser(null)}
+                  disabled={deleting}
+                ></button>
 
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={handleCancelDelete}
-                    disabled={deleting}
-                    aria-label="Close"
-                  ></button>
+              </div>
 
-                </div>
+              <div className="modal-body">
+                Are you sure you want to delete
+                <strong> {deleteUser.name} </strong>?
+              </div>
 
-                <div className="modal-body">
+              <div className="modal-footer">
 
-                  <p>Are you sure you want to delete this user?</p>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setDeleteUser(null)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
 
-                  <strong>
-                    {deleteUser.name || deleteUser.email}
-                  </strong>
-
-                </div>
-
-                <div className="modal-footer">
-
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleCancelDelete}
-                    disabled={deleting}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={confirmDelete}
-                    disabled={deleting}
-                  >
-
-                    {deleting ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete'
-                    )}
-
-                  </button>
-
-                </div>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
 
               </div>
 
@@ -591,9 +531,7 @@ function UserList() {
 
           </div>
 
-          <div className="modal-backdrop fade show"></div>
-
-        </>
+        </div>
 
       )}
 

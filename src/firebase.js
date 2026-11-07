@@ -1,6 +1,9 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
+// Keep your existing Firebase configuration here
 const firebaseConfig = {
   apiKey: "AIzaSyDvpIQhG24Gr-b-FnzOoy6xEX-SRexRT5g",
   authDomain: "daily-task-manager-e4499.firebaseapp.com",
@@ -11,8 +14,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
-export { db };
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+export { db, auth };
 export default app;
+
 
